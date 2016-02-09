@@ -1,0 +1,3 @@
+
+class SchemaAlreadyExisitsError(Exception):
+    pass
