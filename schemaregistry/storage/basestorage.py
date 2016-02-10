@@ -9,7 +9,7 @@
 """
 
 import hashlib
-from error import SchemaExistsError, SchemaDoesNotExisitError
+from error import SchemaExistsError, SchemaDoesNotExistError
 
 class BaseStorage(object):
     """
@@ -51,7 +51,7 @@ class BaseStorage(object):
         schema = self._get_schema_by_id(id)
 
         if schema is None:
-            raise SchemaDoesNotExisitError()
+            raise SchemaDoesNotExistError()
 
         return self._get_version(schema, version)
 
@@ -98,7 +98,7 @@ class BaseStorage(object):
         :return: the new version number
         """
         if not self.schema_exists(name):
-            raise SchemaDoesNotExisitError()
+            raise SchemaDoesNotExistError()
 
         id = self._name_to_id(name)
         schema = self._get_schema_by_id(id)

@@ -33,7 +33,7 @@ class Memory(BaseStorage):
         return [k for k in self.__data]
 
     def _get_schema_versions(self, schema):
-        return [k for k,v in schema]
+        return [k for k in schema]
 
     def _do_create_schema(self, name, id):
         self.__data[id] = dict()

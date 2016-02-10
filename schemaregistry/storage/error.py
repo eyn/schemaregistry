@@ -14,7 +14,7 @@ class SchemaExistsError(Exception):
     """
     pass
 
-class SchemaDoesNotExisitError(Exception):
+class SchemaDoesNotExistError(Exception):
     """
     Thrown when a schema does not exist
     """
