@@ -19,3 +19,9 @@ class SchemaDoesNotExistError(Exception):
     Thrown when a schema does not exist
     """
     pass
+
+class SchemaHasNoVersionsError(Exception):
+    """
+    Thrown when a schema does not have any versions
+    """
+    pass

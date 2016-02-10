@@ -9,7 +9,7 @@
 """
 
 import hashlib
-from error import SchemaExistsError, SchemaDoesNotExistError
+from error import SchemaExistsError, SchemaDoesNotExistError, SchemaHasNoVersionsError
 
 class BaseStorage(object):
     """
@@ -35,7 +35,7 @@ class BaseStorage(object):
         schema = self._get_schema_by_id(id)
 
         if schema is None:
-            return None
+            raise SchemaDoesNotExistError()
 
         return self._get_schema_versions(schema)
 
@@ -65,9 +65,14 @@ class BaseStorage(object):
         schema = self._get_schema_by_id(id)
 
         if schema is None:
+            raise SchemaDoesNotExistError()
+
+        try:
+            version_number = self._get_schema_latest_version_number(schema)
+        except(SchemaHasNoVersionsError):
+            ''' No schema versions '''
             return None
 
-        version_number = self._get_schema_latest_version_number(schema)
         return self.get_schema_version(name, version_number)
 
     def create_schema(self, name):
@@ -110,7 +115,12 @@ class BaseStorage(object):
         :param schema: The name of the schema
         :return: The latest version number
         """
-        return max(self._get_schema_versions(schema))
+        versions = self._get_schema_versions(schema)
+
+        try:
+            return max(versions)
+        except(ValueError):
+            raise SchemaHasNoVersionsError()
 
     def _name_to_id(self, name):
         """
