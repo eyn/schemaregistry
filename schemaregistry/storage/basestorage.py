@@ -9,7 +9,7 @@
 """
 
 import hashlib
-from error import SchemaAlreadyExistsError, SchemaDoesNotExisitError
+from error import SchemaExistsError, SchemaDoesNotExisitError
 
 class BaseStorage(object):
     """
@@ -72,11 +72,11 @@ class BaseStorage(object):
 
     def create_schema(self, name):
         """
-        Creates a schema. Throws SchemaAlreadyExistsError if schema already exists
+        Creates a schema. Throws SchemaExistsError if schema already exists
         :param name: The name of the schema
         """
         if self.schema_exists(name):
-            raise SchemaAlreadyExistsError()
+            raise SchemaExistsError()
 
         id = self._name_to_id(name)
         self._do_create_schema(name, id)

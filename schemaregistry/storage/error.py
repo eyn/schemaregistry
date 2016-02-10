@@ -8,7 +8,7 @@
     :license: BSD, see LICENSE for more details
 """
 
-class SchemaAlreadyExistsError(Exception):
+class SchemaExistsError(Exception):
     """
     Thrown when a schema already exists
     """
