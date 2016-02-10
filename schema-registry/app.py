@@ -1,10 +1,6 @@
 from flask import Flask, request
 from flask.json import jsonify
 import storage
-
-app = Flask(__name__)
-
-datastore = storage.Memory()
 """
     schema-registry.app
     ~~~~~~~~~~~~~~~~~~~
@@ -14,6 +10,10 @@ datastore = storage.Memory()
     :copyright: (c) by 2016 James Moore
     :license: BSD, see LICENSE for more details
 """
+app = Flask(__name__)
+
+datastore = storage.Memory()
+
 
 @app.route('/schemas/<name>/<version>', methods=['GET'])
 def get_schema_version(name, version):
