@@ -1,3 +1,21 @@
+"""
+    error.py
+    ~~~~~~~~
 
-class SchemaAlreadyExisitsError(Exception):
+    This module contains errors to be thrown by storage modules
+
+    :copyright: (c) by 2016 James Moore
+    :license: BSD, see LICENSE for more details
+"""
+
+class SchemaAlreadyExistsError(Exception):
+    """
+    Thrown when a schema already exists
+    """
+    pass
+
+class SchemaDoesNotExisitError(Exception):
+    """
+    Thrown when a schema does not exist
+    """
     pass
