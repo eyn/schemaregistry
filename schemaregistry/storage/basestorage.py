@@ -79,12 +79,14 @@ class BaseStorage(object):
         """
         Creates a schema. Throws SchemaExistsError if schema already exists
         :param name: The name of the schema
+        :returns: The schema's id
         """
         if self.schema_exists(name):
             raise SchemaExistsError()
 
         id = self._name_to_id(name)
         self._do_create_schema(name, id)
+        return id
 
     def schema_exists(self, name):
         """
