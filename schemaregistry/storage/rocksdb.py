@@ -8,7 +8,6 @@
     :license: BSD, see LICENSE for more details
 """
 from __future__ import absolute_import
-import itertools
 import os
 import pickle
 import rocksdb
@@ -29,10 +28,12 @@ class RocksDB(BaseStorage):
 
         key: %s.%s => schema_object
 
+        id is used as a handle for schema
+
     """
     def __init__(self, datafile_name = None, delete_datafile_on_del = False):
         if datafile_name is None:
-            self.__datafile_name = self._get_temp_filename()
+            self.__datafile_name = self.__get_temp_filename()
         else:
             self.__datafile_name = datafile_name
 
@@ -50,15 +51,21 @@ class RocksDB(BaseStorage):
            del self.__db
            shutil.rmtree(self.__datafile_name, ignore_errors=True)
 
-    def _get_temp_filename(self):
+    def __get_info_key(self, id):
+        return b'{0}.info'.format(id)
+
+    def __get_reverse_key(self, id):
+        return b'{0}.{1}'.format(self.__reverse_prefix, id)
+
+    def __get_temp_filename(self):
         return tempfile.mkdtemp(prefix='schemaregistry')
 
     def _get_schema_by_id(self, id):
-        info_key = b'{0}.info'.format(id)
+        info_key = self.__get_info_key(id)
         return id if self.__db.get(info_key) is not None else None
 
     def __get_version_list(self, schema):
-        info_key = '{0}.info'.format(schema)
+        info_key = self.__get_info_key(schema)
         bytes = self.__db.get(info_key)
         return pickle.loads(bytes)
 
@@ -73,7 +80,7 @@ class RocksDB(BaseStorage):
         return pickle.loads(bytes)
 
     def _id_to_name(self, id):
-        key_name = b'{0}.{1}'.format(self.__reverse_prefix, id)
+        key_name = self.__get_reverse_key(id)
         name = self.__db.get(key_name)
         return name.decode('utf-8')
 
@@ -97,14 +104,14 @@ class RocksDB(BaseStorage):
         return range(1, len(version_list) + 1)
 
     def _do_create_schema(self, name, id):
-        reverse_key = b'{0}.{1}'.format(self.__reverse_prefix, id)
-        info_key = b'{0}.info'.format(id)
+        reverse_key = self.__get_reverse_key(id)
+        info_key = self.__get_info_key(id)
         self.__db.put(reverse_key, name.encode('utf-8'))
         self.__db.put(info_key, pickle.dumps(list()))
 
     def _do_create_schema_version(self, schema, new_version):
         version_key = b'{0}.{1}'.format(schema, os.urandom(24).encode('base-64').replace('\n', ''))
-        info_key = b'{0}.info'.format(schema)
+        info_key = self.__get_info_key(schema)
 
         self.__db.merge(info_key, pickle.dumps([version_key]))
         self.__db.put(version_key, pickle.dumps(new_version))
