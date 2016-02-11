@@ -1,6 +1,7 @@
 from flask import Flask, request
 from flask.json import jsonify
 import storage.rocksdb
+import storage.error
 """
     schema-registry.app
     ~~~~~~~~~~~~~~~~~~~
@@ -87,10 +88,10 @@ def create_schema():
 
     try:
         schema = datastore.create_schema(name)
-    except storage.SchemaAlreadyExisitsError:
+    except storage.error.SchemaExistsError:
         return 'Already exisits', 409
 
-    return jsonify(schema), 201
+    return jsonify({'id': schema}), 201
 
 @app.route('/schemas/<name>', methods=['POST'])
 def create_schema_version(name):
@@ -105,8 +106,6 @@ def create_schema_version(name):
 
     version = datastore.create_schema_version(name, schema)
     return jsonify(version), 201
-
-
 
 if __name__ == '__main__':
     app.run(debug=True,host= '0.0.0.0')
