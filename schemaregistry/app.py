@@ -1,6 +1,6 @@
 from flask import Flask, request
 from flask.json import jsonify
-import storage
+import storage.rocksdb
 """
     schema-registry.app
     ~~~~~~~~~~~~~~~~~~~
@@ -12,7 +12,7 @@ import storage
 """
 app = Flask(__name__)
 
-datastore = storage.Memory()
+datastore = storage.rocksdb.RocksDB()
 
 
 @app.route('/schemas/<name>/<version>', methods=['GET'])
