@@ -9,6 +9,7 @@
 """
 from __future__ import absolute_import
 import os
+import gc
 import pickle
 import rocksdb
 import shutil
@@ -31,25 +32,15 @@ class RocksDB(BaseStorage):
         id is used as a handle for schema
 
     """
-    def __init__(self, datafile_name = None, delete_datafile_on_del = False):
-        if datafile_name is None:
-            self.__datafile_name = self.__get_temp_filename()
-        else:
-            self.__datafile_name = datafile_name
-
+    def __init__(self, datafile_name):
+        self.__datafile_name = datafile_name
         self.__reverse_prefix = b'_reverse______________________32'
-        self.__delete_datafile_on_del = delete_datafile_on_del
 
         opts = rocksdb.Options()
         opts.create_if_missing=True
         opts.prefix_extractor = StaticPrefix()
         opts.merge_operator = VersionMerger()
         self.__db = rocksdb.DB(self.__datafile_name, opts)
-
-    def __del__(self):
-       if True == self.__delete_datafile_on_del:
-           del self.__db
-           shutil.rmtree(self.__datafile_name, ignore_errors=True)
 
     def __get_info_key(self, id):
         return b'{0}.info'.format(id)
