@@ -9,7 +9,7 @@
 """
 
 import hashlib
-from error import SchemaExistsError, SchemaDoesNotExistError, SchemaHasNoVersionsError
+from error import SchemaExistsError, SchemaDoesNotExistError, SchemaHasNoVersionsError, SchemaVersionDoesNotExistError
 
 class BaseStorage(object):
     """
@@ -18,12 +18,13 @@ class BaseStorage(object):
     '''
     Default implementations
     '''
-    def get_schemas(self):
+    def get_schemas(self, ids = []):
         """
         Returns a list of known schemas
+        :param ids: Optional parameter specifying list of ids to filter on
         :return: A list of schema names
         """
-        return [self._id_to_name(k) for k in self._do_get_schema_ids()]
+        return [self._id_to_name(k) for k in self._do_get_schema_ids() if len(ids) == 0 or k in ids]
 
     def get_schema_versions(self, name):
         """
@@ -53,7 +54,12 @@ class BaseStorage(object):
         if schema is None:
             raise SchemaDoesNotExistError()
 
-        return self._get_version(schema, version)
+        version = self._get_version(schema, version)
+
+        if version is None:
+            raise SchemaVersionDoesNotExistError()
+
+        return version
 
     def get_latest_schema(self, name):
         """

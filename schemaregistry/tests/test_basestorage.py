@@ -9,7 +9,7 @@
 """
 
 import pytest
-from schemaregistry.storage.error import SchemaDoesNotExistError, SchemaExistsError
+from schemaregistry.storage.error import SchemaDoesNotExistError, SchemaExistsError, SchemaVersionDoesNotExistError
 
 values = {
     'default_schema_name': 'test',
@@ -65,6 +65,10 @@ def test_reports_correct_schema_versions(storageengine):
     versions += [storageengine.create_schema_version(v('default_schema_name'), v('default_schema_v3'))]
     assert storageengine.get_schema_versions(v('default_schema_name')) == versions
 
+def test_schema_versions_on_empty_schema_returns_empty_list(storageengine):
+    storageengine.create_schema(v('default_schema_name'))
+    retval = storageengine.get_schema_versions(v('default_schema_name'))
+    assert [] == retval
 
 def test_get_schema_versions_throws_on_non_existant_schema(storageengine):
     with pytest.raises(SchemaDoesNotExistError):
@@ -85,6 +89,12 @@ def test_throws_error_if_schema_version_requested_for_unknown_schema(storageengi
     with pytest.raises(SchemaDoesNotExistError):
         storageengine.get_schema_version(v('non_existant_schema'), '')
 
+def test_throws_error_if_schema_version_does_not_exist(storageengine):
+    storageengine.create_schema(v('default_schema_name'))
+    version_number = storageengine.create_schema_version(v('default_schema_name'), v('default_schema_v1'))
+
+    with pytest.raises(SchemaVersionDoesNotExistError):
+        storageengine.get_schema_version(v('default_schema_name'), version_number+1)
 
 def test_get_latest_schema(storageengine):
     storageengine.create_schema(v('default_schema_name'))

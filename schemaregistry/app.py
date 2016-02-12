@@ -1,5 +1,5 @@
-from flask import Flask, request
-from flask.json import jsonify
+from flask import Flask, request, make_response
+from flask.json import jsonify, dumps
 import storage.rocksdb
 import storage.error
 """
@@ -14,6 +14,10 @@ import storage.error
 app = Flask(__name__)
 _datastore = None
 
+def reinit_db():
+    global _datastore
+    _datastore = None
+
 def get_datastore():
     global _datastore
     if _datastore is None:
@@ -25,6 +29,49 @@ def get_datastore():
 
     return _datastore
 
+@app.route('/schemas', methods=['GET'])
+def get_schemas():
+    """
+    If id set in query string then search for just that schema otherwise return all schemas
+
+    :return: a list of registered schema names and associated ids
+    """
+    id = request.args.get('id')
+
+    if id is not None:
+        schemas = get_datastore().get_schemas(ids=[id])
+    else:
+        schemas = get_datastore().get_schemas()
+
+    retval = make_response((dumps(schemas), 200, dict(mimetype='application/json')))
+    return retval
+
+@app.route('/schemas/<name>', methods=['GET'])
+def get_schema_versions(name):
+    """
+    :param name: the name of the schema to search for
+    :return: the list of versions of the schema available
+    """
+    try:
+        schema_versions = get_datastore().get_schema_versions(name)
+    except storage.error.SchemaDoesNotExistError:
+        return 'Schema does not exist', 404
+
+    retval = make_response((dumps(schema_versions), 200, dict(mimetype='application/json')))
+    return retval
+
+@app.route('/schemas/<name>/latest', methods=['GET'])
+def get_lastest_schema(name):
+    """
+    :param name: The name of the schema to search for
+    :return: The latest version of that schema
+    """
+    try:
+        schema = get_datastore().get_latest_schema(name)
+    except storage.error.SchemaDoesNotExistError:
+        return 'Schema does not exist', 404
+
+    return schema, 200
 
 @app.route('/schemas/<name>/<version>', methods=['GET'])
 def get_schema_version(name, version):
@@ -37,56 +84,17 @@ def get_schema_version(name, version):
     :param name: The name of the schema to search for
     :param version: The version of the schema to return
     """
-    schema = get_datastore().get_schema_version(name, version)
-
-    if schema is None:
-        return None, 404
-
-    return schema, 200
-
-@app.route('/schemas', methods=['GET'])
-def get_schemas():
-    """
-    If id set in query string then search for just that schema otherwise return all schemas
-
-    :return: a list of registered schema names and associated ids
-    """
-    id = request.args.get('id')
-
-    if id is not None:
-        schemas = get_datastore().get_schema_by_id(id)
-    else:
-        schemas = get_datastore().get_schemas()
-
-    return jsonify(schemas), 200
-
-@app.route('/schemas/<name>', methods=['GET'])
-def get_schema_versions(name):
-    """
-    :param name: the name of the schema to search for
-    :return: the list of versions of the schema available
-    """
-    schema_versions = get_datastore().get_schema_versions(name)
-
-    if schema_versions is None:
-        return None, 404
-
-    return jsonify(schema_versions), 200
-
-@app.route('/schemas/<name>/latest', methods=['GET'])
-def get_lastest_schema(name):
-    """
-    :param name: The name of the schema to search for
-    :return: The latest version of that schema
-    """
-    schema = get_datastore().get_latest_schema(name)
-
-    if schema is None:
-        return None, 404
+    try:
+        schema = get_datastore().get_schema_version(name, version)
+    except storage.error.SchemaDoesNotExistError:
+        return 'Schema does not exist', 404
+    except storage.error.SchemaVersionDoesNotExistError:
+        return 'Version does not exist', 404
 
     return schema, 200
 
-@app.route('/schemas/', methods=['POST'])
+
+@app.route('/schemas', methods=['POST'])
 def create_schema():
     """
     Creates a schema from a post request
@@ -112,10 +120,10 @@ def create_schema_version(name):
     schema = request.data
 
     if not get_datastore().schema_exists(name):
-        return None, 404
+        return 'Schema does not exist', 404
 
     version = get_datastore().create_schema_version(name, schema)
-    return jsonify(version), 201
+    return jsonify({'version': version}), 201
 
 if __name__ == '__main__':
     app.run(debug=True,host= '0.0.0.0')

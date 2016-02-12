@@ -62,7 +62,11 @@ class RocksDB(BaseStorage):
 
     def _get_version(self, schema, version):
         version_list = self.__get_version_list(schema)
-        index = version - 1
+        try:
+            index = int(version) - 1
+        except ValueError:
+            return None
+
         if index < 0 or index >= len(version_list):
             return None
 
