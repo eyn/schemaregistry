@@ -1,8 +1,8 @@
 """
-    tests.memorystorage
+    tests.basestorage
     ~~~~~~~~~~~~~~~~~~~
 
-    Tests the Memory Storage container.
+    Tests Storage containers.
 
     :copyright: (c) 2016 by James Moore.
     :license: BSD, see LICENSE for more details.
