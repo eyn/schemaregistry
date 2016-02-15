@@ -1,7 +1,3 @@
-from flask import Flask, request, make_response
-from flask.json import jsonify, dumps
-import storage.rocksdb
-import storage.error
 """
     schema-registry.app
     ~~~~~~~~~~~~~~~~~~~
@@ -11,6 +7,12 @@ import storage.error
     :copyright: (c) by 2016 James Moore
     :license: BSD, see LICENSE for more details
 """
+
+from flask import Flask, request, make_response
+from flask.json import jsonify, dumps
+import storage.rocksdb
+import storage.error
+
 app = Flask(__name__)
 _datastore = None
 
