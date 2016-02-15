@@ -40,6 +40,7 @@ def emptydb(tmpdir_factory):
 
 '''
 Test GET /schemas
+Test POST /schemas
 '''
 test_get_schemas_testparams = [
     ([], [], 200),                                                  # get schemas works when no schemas defined
@@ -87,7 +88,7 @@ def test_get_schema_by_id(schemas, get_url, retval, status_code):
         assert resp.status_code == status_code
 
 '''
-GET /schemas/<name>/<version>
+GET /schemas/<name>
 '''
 test_get_schema_versions_testparams = [
     # non-existant schema returns 404
@@ -164,30 +165,40 @@ def test_get_latest_schema_multi_version_schema(schemas,versions,get_url,expecte
         assert resp.status_code == expected_response['status_code']
         assert resp.data == expected_response['data']
 
-test_get_non_existant_version_testparams = [
-    ([],                [],           '/schemas/non_existant/1',    404),  # non existant schema, numeric version
-    ([],                [],           '/schemas/non_existant/abc',  404),  # non existant schema, invalid version
-    (['test'],          [],           '/schemas/test/1',            404),  # schema with no version
-    (['test', 'test2'], [],           '/schemas/test/1',            404),  # multiple schemas with no version
-    (['test'],          ['v1'],       '/schemas/test/2',            404),  # schema with version, ask for higher one
-    (['test'],          ['v1', 'v2'], '/schemas/test/3',            404),  # schema with versions, ask for higher one
-    (['test'],          ['v1'],       '/schemas/test/abc',          404),  # schema with version, invalid version
-    (['test'],          ['v1', 'v2'], '/schemas/test/abc',          404),  # schema with versions, invalid version
+'''
+GET /schemas/<name>/<version>
+'''
+
+resp_sne = dict(status_code=404, data='Schema does not exist')
+resp_vne = dict(status_code=404, data='Version does not exist')
+
+test_get_version_test_params = [
+    ([],                [],           '/schemas/non_existant/1',  resp_sne),  # non existant schema, numeric version
+    ([],                [],           '/schemas/non_existant/abc',resp_sne),  # non existant schema, invalid version
+    (['test'],          [],           '/schemas/test/1',          resp_vne),  # schema with no version
+    (['test', 'test2'], [],           '/schemas/test/1',          resp_vne),  # multiple schemas with no version
+    (['test'],          ['v1'],       '/schemas/test/2',          resp_vne),  # schema with version, ask for higher one
+    (['test'],          ['v1', 'v2'], '/schemas/test/3',          resp_vne),  # schema with versions, ask for higher one
+    (['test'],          ['v1'],       '/schemas/test/abc',        resp_vne),  # schema with version, invalid version
+    (['test'],          ['v1'],        '/schemas/test/1',         dict(status_code=200, data='v1')),
+    (['test'],          ['v1', 'v2'], '/schemas/test/1',          dict(status_code=200, data='v1')),
+    (['test'],          ['v1', 'v2'], '/schemas/test/2',          dict(status_code=200, data='v2')),
 ]
 
 @pytest.mark.usefixtures("emptydb")
-@pytest.mark.parametrize("schemas,versions,get_url,response", test_get_non_existant_version_testparams)
+@pytest.mark.parametrize("schemas,versions,get_url,response", test_get_version_test_params)
 def test_get_non_existant_version(schemas,versions,get_url, response):
     with app.test_client() as c:
         for schema in schemas:
-            postresp = c.post('/schemas', data=dict(name=schema))
-            assert postresp.status_code == 201
+            post_resp = c.post('/schemas', data=dict(name=schema))
+            assert post_resp.status_code == 201
 
-            schemaurl = '/schemas/{0}'.format(schema)
+            schema_url = '/schemas/{0}'.format(schema)
             for version in versions:
-                verresp = c.post(schemaurl, data=version)
+                verresp = c.post(schema_url, data=version)
                 assert verresp.status_code == 201
 
-
         resp = c.get(get_url)
-        assert resp.status_code == response
+        assert resp.status_code == response['status_code']
+        assert resp.data == response['data']
+
